@@ -29,4 +29,36 @@ ClassMethod GetPackages() As %Status
     Quit tSC
 }
 
+ClassMethod XPathQuery(url As %String, context As %String, expr As %String)
+{
+	Set req=##class(%Net.HttpRequest).%New()
+	Set req.Https = 1
+	Set req.SSLConfiguration = "default"
+	$$$TOE(st, req.Get(url))
+	Set data = req.HttpResponse.Data.Read()
+	$$$TOE(st, ##class(%XML.XPATH.Document).CreateFromString(data,.tDoc))
+    $$$TOE(st, tDoc.EvaluateExpression(context,expr,.tRes))
+    $$$TOE(st, ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(.stream, tRes))
+    Return stream.Read($$$MaxLocalLength)
+}
+
+ClassMethod XPathTest()
+{
+    w "Keywors: ",!
+    set json = ..XPathQuery(
+        "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
+        "/Export/Document/Module/Keywords",
+        "text()"
+    )
+    w json,!
+
+    w "All dependencies names:",!
+    set json = ..XPathQuery(
+        "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
+        "/Export/Document/Module/Dependencies/ModuleReference/Name",
+        "text()"
+    )
+    w json,!
+}
+
 }
