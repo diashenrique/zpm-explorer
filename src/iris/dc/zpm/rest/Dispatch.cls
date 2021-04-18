@@ -2,6 +2,8 @@
 Class dc.zpm.rest.Dispatch Extends %CSP.REST
 {
 
+Parameter CONTENTTYPE = "application/json";
+
 XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 {
 <Routes>
