@@ -20,7 +20,7 @@ ClassMethod GetPackages() As %Status
         
         Set iter = arrJSON.%GetIterator()
         While iter.%GetNext(.key , .value ) {
-            write arrJSON.%Get(key).name_ ", "_arrJSON.%Get(key).description_ ", "_arrJSON.%Get(key).repository_ ", "_arrJSON.%Get(key).versions.%Get(0) ,!
+            Write arrJSON.%Get(key).name_ ", "_arrJSON.%Get(key).description_ ", "_arrJSON.%Get(key).repository_ ", "_arrJSON.%Get(key).versions.%Get(0) ,!
         }
     }
     Catch {
@@ -35,40 +35,55 @@ ClassMethod GetPackages() As %Status
 ClassMethod InstallPackage() As %Status
 {
     Set sc = $$$OK
-    set appName = ""
+    Set appName = ""
+    Set errorMsg = ""
     
     Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
 
-    set blnIsInstalled = ..IsInstalled(obj.name)
+    Set blnIsInstalled = ..IsInstalled(obj.name)
 
-    if (blnIsInstalled = $$$NO) {
-        
-        set statusInstall = $zpm("install "_obj.name)
-        write statusInstall,!
-        
-        if $$$ISOK(statusInstall) {
+    If (blnIsInstalled = $$$NO) {
+        Set dev = "/tmp/log-zpm-"_obj.name_"-"_$REPLACE($HOROLOG,",","")_".txt"
+        Open dev:("ARW"):5
+        Use dev
+
+        Try {
+            // Install ZPM package
+            $$$TOE(sc, $zpm("install "_obj.name))
+
             // Save the package information on InstalledPackages class
-            set installedPackage = ##class(dc.zpm.InstalledPackages).%New()
-            set installedPackage.AppName = obj.name
-            set installedPackage.AppVersion = obj.version
-            set installedPackage.DateInstalled = +$horolog
-            set sc = installedPackage.%Save()
+            Set installedPackage = ##class(dc.zpm.InstalledPackages).%New()
+            Set installedPackage.AppName = obj.name
+            Set installedPackage.AppVersion = obj.version
+            Set installedPackage.DateInstalled = +$HOROLOG
+            $$$TOE(sc, installedPackage.%Save())
 
-            if $$$ISOK(sc) {
-                set json = {}
-                do json.%Set("status","success")
-                do json.%Set("msg","The package has been installed successfully")
-                write json.%ToJSON()
-            }
-        } 
-    } else {
-        set json = {}
-        do json.%Set("status","warning")
-        do json.%Set("msg","The package it's already installed")
-        write json.%ToJSON()
+            Set json = {}
+            Do json.%Set("status","success")
+            Do json.%Set("msg","The package has been installed successfully")
+            Write json.%ToJSON()
+        }
+        Catch ex {
+            Set sc = ex.AsStatus()
+            Set errorMsg = ex.DisplayString()
+        }
+
+        Close dev
+
+        If ($$$ISERR(sc)) {
+            Set json = {}
+            Do json.%Set("status","error")
+            Do json.%Set("msg",errorMsg)
+            Write json.%ToJSON()
+        }
+    } Else {
+        Set json = {}
+        Do json.%Set("status","warning")
+        Do json.%Set("msg","The package it's already installed")
+        Write json.%ToJSON()
     }
     
-    Return sc
+    Return $$$OK
 }
 
 /// Check if a package it's already installed
@@ -76,10 +91,10 @@ ClassMethod IsInstalled(pPackageName As %String) As %Status
 {
     Set sc = $$$OK
     
-    Set indexPackageName = " "_$zcvt(pPackageName,"U")
+    Set indexPackageName = " "_$ZCONVERT(pPackageName,"U")
 
-    if ($data(^dc.zpm.InstalledPackagesI("IndexAppName",indexPackageName,1)) = 0) {
-        set sc = $$$NO
+    If ($DATA(^dc.zpm.InstalledPackagesI("IndexAppName",indexPackageName,1)) = 0) {
+        Set sc = $$$NO
     }
 
     Return sc
@@ -108,7 +123,7 @@ ClassMethod GetTags(pPackageName As %String, pPackageVersion As %String) As %Dyn
         "text()"
     )
     Set tags = [].%FromJSON(json)
-    Set list = $LFS(tags.%Get(0).%Get("Value"))
+    Set list = $LISTFROMSTRING(tags.%Get(0).%Get("Value"))
 
     Kill tags
     Set tags = []
@@ -126,21 +141,21 @@ ClassMethod GetTagsTest() As %Status
 
 ClassMethod XPathTest()
 {
-    w "Keywors: ",!
-    set json = ..XPathQuery(
+    Write "Keywors: ",!
+    Set json = ..XPathQuery(
         "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
         "/Export/Document/Module/Keywords",
         "text()"
     )
-    w json,!
+    Write json,!
 
-    w "All dependencies names:",!
-    set json = ..XPathQuery(
+    Write "All dependencies names:",!
+    Set json = ..XPathQuery(
         "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
         "/Export/Document/Module/Dependencies/ModuleReference",
         "text()"
     )
-    w json,!
+    Write json,!
 }
 
 }
