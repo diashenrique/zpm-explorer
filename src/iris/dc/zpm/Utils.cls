@@ -57,11 +57,6 @@ ClassMethod InstallPackage() As %Status
             Set installedPackage.AppVersion = obj.version
             Set installedPackage.DateInstalled = +$HOROLOG
             $$$TOE(sc, installedPackage.%Save())
-
-            Set json = {}
-            Do json.%Set("status","success")
-            Do json.%Set("msg","The package has been installed successfully")
-            Write json.%ToJSON()
         }
         Catch ex {
             Set sc = ex.AsStatus()
@@ -70,12 +65,15 @@ ClassMethod InstallPackage() As %Status
 
         Close dev
 
-        If ($$$ISERR(sc)) {
-            Set json = {}
+        Set json = {}
+        If ('$$$ISERR(sc)) {
+            Do json.%Set("status","success")
+            Do json.%Set("msg","The package has been installed successfully")
+        } else {
             Do json.%Set("status","error")
             Do json.%Set("msg",errorMsg)
-            Write json.%ToJSON()
         }
+        Write json.%ToJSON()
     } Else {
         Set json = {}
         Do json.%Set("status","warning")
