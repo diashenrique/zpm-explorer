@@ -50,3 +50,9 @@ Settings file to let you immedietly code in VSCode with [VSCode ObjectScript plu
 Config file if you want to debug with VSCode ObjectScript
 
 [Read about all the files in this artilce](https://community.intersystems.com/post/dockerfile-and-friends-or-how-run-and-collaborate-objectscript-projects-intersystems-iris)
+
+## Dream team
+
+- [Henrique Dias](https://community.intersystems.com/user/henrique-dias-2)
+- [José Roberto Pereira](https://community.intersystems.com/user/jos%C3%A9-roberto-pereira-0)
+  
