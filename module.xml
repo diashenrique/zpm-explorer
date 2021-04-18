@@ -21,9 +21,18 @@
         PasswordAuthEnabled="1" 
         Recurse="1" ServeFiles="1" 
         ServeFilesTimeout="3600" 
-        UnauthenticatedEnabled="0" Url="/csp/irisapp" 
+        UnauthenticatedEnabled="0" 
+        Url="/csp/irisapp" 
         UseSessionCookie="2"/>
-      <Resource Name="dc.PackageSample.PKG"/>
+      <CSPApplication 
+        AuthenticationMethods="16416" 
+        CookiePath="/csp/irisapp/api/" 
+        DispatchClass="dc.zpm.rest.Dispatch" 
+        MatchRoles=":%All" 
+        Recurse="1" 
+        ServeFiles="1" 
+        Url="/csp/irisapp/api/" 
+        UseSessionCookie="1"/> 
       <Resource Name="dc.zpm.PKG"/>
     </Module>
   </Document>
