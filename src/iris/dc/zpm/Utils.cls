@@ -14,9 +14,12 @@ ClassMethod GetPackages() As %Status
         Set tSC = httprequest.Get("/packages/-/all")
 
         Set stream = httprequest.HttpResponse.Data
-        Set json = ##class(%DynamicObject).%FromJSON(stream)
+        Set arrJSON = ##class(%DynamicArray).%FromJSON(stream)
         
-        write json,!        
+        Set iter = arrJSON.%GetIterator()
+        While iter.%GetNext(.key , .value ) {
+            write arrJSON.%Get(key).name_ ", "_arrJSON.%Get(key).description_ ", "_arrJSON.%Get(key).repository_ ", "_arrJSON.%Get(key).versions.%Get(0) ,!
+        }
     }
     Catch {
         Write httprequest.HttpResponse.StatusCode_" - "_httprequest.HttpResponse.ReasonPhrase,!
