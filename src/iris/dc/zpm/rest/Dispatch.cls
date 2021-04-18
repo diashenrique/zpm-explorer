@@ -8,6 +8,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 
 <Route Url="/" Method="GET" Call="Test" Cors="true"/>
 <Route Url="/package" Method="GET" Call="dc.zpm.Utils:GetPackages" Cors="true"/>
+<Route Url="/package/:id" Method="POST" Call="dc.zpm.Utils:InstallPackage" Cors="true"/>
 
 </Routes>
 }

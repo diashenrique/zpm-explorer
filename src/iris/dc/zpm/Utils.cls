@@ -31,6 +31,14 @@ ClassMethod GetPackages() As %Status
     Quit tSC
 }
 
+/// Installation Package method
+ClassMethod InstallPackage(pPackageName As %String) As %Status
+{
+    Set sc = $$$OK
+    
+    Return sc
+}
+
 ClassMethod XPathQuery(url As %String, context As %String, expr As %String)
 {
 	Set req=##class(%Net.HttpRequest).%New()
