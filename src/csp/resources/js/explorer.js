@@ -23,6 +23,20 @@ $(document).ready(function () {
     sort: "name"
   }
 
+  var loadPanel = $(".loadpanel").dxLoadPanel({
+    message: 'ZPM is working...',
+    shadingColor: "rgba(0,0,0,0.4)",
+    visible: false,
+    showIndicator: true,
+    showPane: true,
+    shading: true,
+    closeOnOutsideClick: false
+  }).dxLoadPanel("instance");
+
+  var showLoadPanel = function () {
+    loadPanel.show();
+  };
+
   $("#package-list").dxDataGrid({
     dataSource: customStore,
     rowAlternationEnabled: true,
@@ -90,6 +104,7 @@ $(document).ready(function () {
                     name: selectedRowsData[0].name,
                     version: selectedRowsData[0].versions[0]
                   };
+                  showLoadPanel();
                   $.ajax({
                     url: urlREST + "/package",
                     method: "POST",
@@ -97,6 +112,7 @@ $(document).ready(function () {
                     contentType: "application/json",
                     data: JSON.stringify(values)
                   }).done(function (e) {
+                    loadPanel.hide();
                     console.log(e);
                     DevExpress.ui.notify(e.msg, e.status, 4000);
                   });
