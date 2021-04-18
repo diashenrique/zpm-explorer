@@ -32,10 +32,56 @@ ClassMethod GetPackages() As %Status
 }
 
 /// Installation Package method
-ClassMethod InstallPackage(pPackageName As %String) As %Status
+ClassMethod InstallPackage() As %Status
+{
+    Set sc = $$$OK
+    set appName = ""
+    
+    Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
+
+    set blnIsInstalled = ..IsInstalled(obj.name)
+
+    if (blnIsInstalled = $$$NO) {
+        
+        set statusInstall = $zpm("install "_obj.name)
+        write statusInstall,!
+        
+        if $$$ISOK(statusInstall) {
+            // Save the package information on InstalledPackages class
+            set installedPackage = ##class(dc.zpm.InstalledPackages).%New()
+            set installedPackage.AppName = obj.name
+            set installedPackage.AppVersion = obj.version
+            set installedPackage.DateInstalled = +$horolog
+            set sc = installedPackage.%Save()
+
+            if $$$ISOK(sc) {
+                set json = {}
+                do json.%Set("status","success")
+                do json.%Set("msg","The package has been installed successfully")
+                write json.%ToJSON()
+            }
+        } 
+    } else {
+        set json = {}
+        do json.%Set("status","warning")
+        do json.%Set("msg","The package it's already installed")
+        write json.%ToJSON()
+    }
+    
+    Return sc
+}
+
+/// Check if a package it's already installed
+ClassMethod IsInstalled(pPackageName As %String) As %Status
 {
     Set sc = $$$OK
     
+    Set indexPackageName = " "_$zcvt(pPackageName,"U")
+
+    if ($data(^dc.zpm.InstalledPackagesI("IndexAppName",indexPackageName,1)) = 0) {
+        set sc = $$$NO
+    }
+
     Return sc
 }
 

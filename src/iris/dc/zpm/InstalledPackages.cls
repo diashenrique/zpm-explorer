@@ -3,13 +3,16 @@ Class dc.zpm.InstalledPackages Extends %Persistent
 {
 
 /// ID of the App Installed
-Property AppID As dc.zpm.Packages;
+Property AppName As %String;
 
 /// Version installed
 Property AppVersion As %String;
 
 /// Date Installed
 Property DateInstalled As %Date;
+
+/// Index On Installed App
+Index IndexAppName On AppName;
 
 Storage Default
 {
@@ -18,7 +21,7 @@ Storage Default
 <Value>%%CLASSNAME</Value>
 </Value>
 <Value name="2">
-<Value>AppID</Value>
+<Value>AppName</Value>
 </Value>
 <Value name="3">
 <Value>AppVersion</Value>
