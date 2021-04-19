@@ -43,7 +43,7 @@ ClassMethod InstallPackage() As %Status
     Set blnIsInstalled = ..IsInstalled(obj.name)
 
     If (blnIsInstalled = $$$NO) {
-        Set dev = "/tmp/log-zpm-"_obj.name_"-"_$REPLACE($HOROLOG,",","")_".txt"
+        Set dev = $$$FormatText("/tmp/log-zpm-%1-%2.txt", obj.name, $REPLACE($HOROLOG,",",""))
         Open dev:("ARW"):5
         Use dev
 
@@ -69,7 +69,7 @@ ClassMethod InstallPackage() As %Status
         If ('$$$ISERR(sc)) {
             Do json.%Set("status","success")
             Do json.%Set("msg","The package has been installed successfully")
-        } else {
+        } Else {
             Do json.%Set("status","error")
             Do json.%Set("msg",errorMsg)
         }
@@ -87,13 +87,41 @@ ClassMethod InstallPackage() As %Status
 /// Check if a package it's already installed
 ClassMethod IsInstalled(pPackageName As %String) As %Status
 {
-    Set sc = $$$OK
-    
-    Set indexPackageName = " "_$ZCONVERT(pPackageName,"U")
+    Return ##class(%ZPM.PackageManager.Developer.Module).NameExists(pPackageName)
+}
 
-    If ($DATA(^dc.zpm.InstalledPackagesI("IndexAppName",indexPackageName,1)) = 0) {
-        Set sc = $$$NO
+/// Uninstall a ZPM package
+ClassMethod UninstallPackage(pPackageName As %String) As %Status
+{
+    Set sc = $$$OK
+    Set errorMsg = ""
+
+    Set dev = $$$FormatText("/tmp/log-zpm-%1-%2.txt", pPackageName, $REPLACE($HOROLOG,",",""))
+    Open dev:("ARW"):5
+    Use dev
+
+    Try {
+        $$$TOE(sc, $zpm("uninstall "_pPackageName))
+        &SQL(
+            DELETE FROM dc_zpm.InstalledPackages WHERE AppName = :pPackageName
+        )
     }
+    Catch ex {
+        Set sc = ex.AsStatus()
+        Set errorMsg = ex.DisplayString()
+    }
+
+    Close dev
+
+    Set json = {}
+    If ('$$$ISERR(sc)) {
+        Do json.%Set("status","success")
+        Do json.%Set("msg","The package has been uninstalled successfully")
+    } Else {
+        Do json.%Set("status","error")
+        Do json.%Set("msg",errorMsg)
+    }
+    Write json.%ToJSON()
 
     Return sc
 }
