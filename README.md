@@ -28,11 +28,15 @@ $ docker-compose up -d
 
 ## How to Test it
 
-Open in the URL in browser: [http://localhost:52773/csp/irisapp/explorer.html](http://localhost:52773/csp/irisapp/explorer.html)
+1. Open in the URL in browser: [http://localhost:52773/csp/irisapp/explorer.html](http://localhost:52773/csp/irisapp/explorer.html)
 
-or using the VSCode link shortcurts:
+2. You can take advantage of the VSCode link shortcurts:
 
 ![VS Code](https://raw.githubusercontent.com/diashenrique/zpm-explorer/master/images/vscode.png)
+
+## If you want to test the app without installing anything
+
+[https://zpm-explorer.contest.community.intersystems.com/csp/irisapp/explorer.html](https://zpm-explorer.contest.community.intersystems.com/csp/irisapp/explorer.html)
 
 ## How ZPM Explorer looks like
 
