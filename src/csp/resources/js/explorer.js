@@ -68,9 +68,6 @@ $(document).ready(function () {
     headerFilter: {
       visible: true
     },
-    // scrolling: {
-    //   mode: "virtual"
-    // },
     selection: {
       mode: "single"
     },
@@ -125,7 +122,6 @@ $(document).ready(function () {
                   });
                 }
               });
-
             }
           }
         }
