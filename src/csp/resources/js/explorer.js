@@ -46,12 +46,12 @@ $(document).ready(function () {
     hoverStateEnabled: true,
     showBorders: true,
     paging: {
-        pageSize: 10
+      pageSize: 10
     },
     pager: {
-        showPageSizeSelector: true,
-        allowedPageSizes: [5, 10, 20],
-        showInfo: true
+      showPageSizeSelector: true,
+      allowedPageSizes: [5, 10, 20],
+      showInfo: true
     },
     sorting: {
       mode: "single"
@@ -65,14 +65,12 @@ $(document).ready(function () {
       width: 240,
       placeholder: "Search..."
     },
-    headerFilter: {
-      visible: true
-    },
     selection: {
       mode: "single"
     },
     focusedRowEnabled: true,
-    columns: ["name", "description", {
+    columns: ["name", "description", 
+    {
       dataField: "repository",
       cellTemplate: function (container, options) {
         var linkRepository = options.data.repository;
@@ -80,7 +78,14 @@ $(document).ready(function () {
           openDetails(linkRepository);
         }).appendTo(container));
       }
-    }, "versions"],
+    }, 
+    {
+      dataField: "versions",
+      caption: "Version",
+      dataType: "string",
+      alignment: "right",
+      width: 100
+    }],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
 

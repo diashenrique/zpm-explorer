@@ -22,6 +22,20 @@ $(document).ready(function () {
     sort: "name"
   }
 
+  var loadPanel = $(".loadpanel").dxLoadPanel({
+    message: 'ZPM is working...',
+    shadingColor: "rgba(0,0,0,0.4)",
+    visible: false,
+    showIndicator: true,
+    showPane: true,
+    shading: true,
+    closeOnOutsideClick: false
+  }).dxLoadPanel("instance");
+
+  var showLoadPanel = function () {
+    loadPanel.show();
+  };
+
   var moduleXML = '';
 
   $("#package-list").dxDataGrid({
@@ -60,15 +74,19 @@ $(document).ready(function () {
       mode: "multiple"
     },
     focusedRowEnabled: true,
-    // columns: ["name", "description", {
-    //   dataField: "repository",
-    //   cellTemplate: function (container, options) {
-    //     var linkRepository = options.data.repository;
-    //     container.append($("<a>").addClass('repoLink').text(linkRepository).on("click", function (args) {
-    //       openDetails(linkRepository);
-    //     }).appendTo(container));
-    //   }
-    // }, "versions"],
+    columns: ["name", {
+      dataField: "dateTimeInstallation",
+      dataType: "datetime"
+    }, {
+      dataField: "version",
+      caption: "Installed Version",
+      dataType: "string",
+      alignment: "right"
+    }, {
+      dataField: "currentVersion",
+      dataType: "string",
+      alignment: "right"
+    }],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
 
@@ -84,30 +102,38 @@ $(document).ready(function () {
 
             var selectedRowsData = dataGrid.getSelectedRowsData();
 
-            console.log(selectedRowsData[0]);
-
             if (selectedRowsData.length === 0) {
-              DevExpress.ui.notify("No package have been selected", "error");
+              DevExpress.ui.notify("No package have been selected.", "error");
+            } else if (selectedRowsData.length > 1) {
+              DevExpress.ui.notify("Please, update one application at the time.", "error");
             } else {
-              var result = DevExpress.ui.dialog.confirm("Do you want to install the package <b>" + `${selectedRowsData[0].name}` + "</b> ?", "Install Package");
-              result.done(function (resp) {
-                if (resp) {
-                  var values = {
-                    name: selectedRowsData[0].name,
-                    version: selectedRowsData[0].versions[0]
-                  };
-                  $.ajax({
-                    url: urlREST + "/package",
-                    method: "POST",
-                    processData: false,
-                    contentType: "application/json",
-                    data: JSON.stringify(values)
-                  }).done(function (e) {
-                    console.log(e);
-                    DevExpress.ui.notify(e.msg, e.status, 4000);
-                  });
-                }
-              });
+              if (selectedRowsData[0].version === selectedRowsData[0].currentVersion) {
+                DevExpress.ui.notify("The application's already in the latest version. No need to update it.", "warning");
+              } else {
+                var result = DevExpress.ui.dialog.confirm("Do you want to install the package <b>" + `${selectedRowsData[0].name}` + "</b> ?", "Install Package");
+                result.done(function (resp) {
+                  if (resp) {
+                    var values = {
+                      name: selectedRowsData[0].name,
+                      update: 1
+                    };
+                    showLoadPanel();
+                    $.ajax({
+                      url: urlREST + "/package",
+                      method: "POST",
+                      processData: false,
+                      contentType: "application/json",
+                      data: JSON.stringify(values)
+                    }).done(function (e) {
+                      loadPanel.hide();
+                      console.log(e);
+                      DevExpress.ui.notify(e.msg, e.status, 4000);
+                    });
+                  }
+                });
+
+              }
+
 
             }
           }

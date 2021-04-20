@@ -7,6 +7,7 @@ Class dc.zpm.Utils
 ClassMethod GetPackages() As %Status
 {
     Set tSC = $$$OK 
+    kill ^zpmXplorerVersion
 
     Try {
         Set httprequest = ##class(%Net.HttpRequest).%New()
@@ -20,7 +21,7 @@ ClassMethod GetPackages() As %Status
         
         Set iter = arrJSON.%GetIterator()
         While iter.%GetNext(.key , .value ) {
-            Write arrJSON.%Get(key).name_ ", "_arrJSON.%Get(key).description_ ", "_arrJSON.%Get(key).repository_ ", "_arrJSON.%Get(key).versions.%Get(0) ,!
+            set ^zpmXplorerVersion(arrJSON.%Get(key).name) = arrJSON.%Get(key).versions.%Get(0)
         }
     }
     Catch {
@@ -37,12 +38,14 @@ ClassMethod InstallPackage() As %Status
     Set sc = $$$OK
     Set appName = ""
     Set errorMsg = ""
+    set blnUpdate = $$$NO 
     
     Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
 
     Set blnIsInstalled = ..IsInstalled(obj.name)
+    Set blnUpdate = obj.update
 
-    If (blnIsInstalled = $$$NO) {
+    If ((blnIsInstalled = $$$NO) || (blnUpdate = $$$YES)) {
         Set dev = $$$FormatText("/tmp/log-zpm-%1-%2.txt", obj.name, $REPLACE($HOROLOG,",",""))
         Open dev:("ARW"):5
         Use dev
@@ -181,7 +184,7 @@ ClassMethod GetInstalledPackages() As %Status
                 do json.%Set("name",result.Name)
                 do json.%Set("dateTimeInstallation",result.LastModifiedTimestamp)
                 do json.%Set("version",result.VersionString)
-                //do json.%Set("currentVersion",..GetCurrentVersion(result.name))
+                do json.%Set("currentVersion",..GetCurrentVersion(result.name))
 	        	do arrayApp.%Push(json)
             }
         }
@@ -202,21 +205,10 @@ ClassMethod GetCurrentVersion(pPackageName As %String) As %String
 {
     Set tSC = $$$OK 
 
-    Try {
-        Set httprequest = ##class(%Net.HttpRequest).%New()
-        Set httprequest.Server = "pm.community.intersystems.com"
-        Set httprequest.Https = 1
-        Set httprequest.SSLConfiguration = "default"
-        Set tSC = httprequest.Get("/packages/"_pPackageName_"/?/")
-
-        Set stream = httprequest.HttpResponse.Data
-        Set json = {}.%FromJSON(stream)
-        set tSC = json.version
+    if ($data(^zpmXplorerVersion) = 0) {
+        do ..GetPackages()
     }
-    Catch {
-        Write httprequest.HttpResponse.StatusCode_" - "_httprequest.HttpResponse.ReasonPhrase,!
-        Set tSC = $$$OK
-    }
+    set tSC = $get(^zpmXplorerVersion(pPackageName))
 
     Quit tSC
 }
