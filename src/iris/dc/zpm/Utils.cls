@@ -219,4 +219,38 @@ ClassMethod GetCurrentVersion(pPackageName As %String) As %String
     Quit tSC
 }
 
+/// Generate a module.xml with current dependencies
+/// pDependencies must be a comma separated values of the form <package>:<version> or <package>:* for the last package version
+ClassMethod ExportDependecies(pDependencies As %String) As %Status
+{
+    Set sc = $$$OK
+    Set tPath = "/tmp/"
+    Set tName = "your-awesome-project-name"
+    Set tVersion = "1.0.0"
+    Set tDescription = "Detail the amazing things you've done"
+    Set tKeywords = "tag1, tag2"
+	Set tTemplate = ##class(%ZPM.PackageManager.Developer.ModuleTemplate).NewTemplate(tPath, tName, tVersion, tDescription, tKeywords)
+    Set listDep = $LISTFROMSTRING(pDependencies)
+    Set ptr = 0
+    While ($LISTNEXT(listDep, ptr, tDependant)) {
+        Do tTemplate.AddDependant(tDependant)
+    }
+	Do tTemplate.ProcessResources()
+	$$$TOE(sc, tTemplate.SaveFile(tPath))
+
+    Set file = ##class(%File).%New(tPath_"module.xml")
+    $$$TOE(sc, file.Open("R"))
+    Set module = ""
+    while('file.AtEnd){
+        Set module = module_$CHAR(13,10)_file.Read()
+    }
+
+    Set json = {
+        "module": ($System.Encryption.Base64Encode(module))
+    }
+    Write json.%ToJSON()
+
+    Return sc
+}
+
 }

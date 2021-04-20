@@ -11,17 +11,18 @@ function openDetails(repositoryLink) {
 }
 
 $(document).ready(function () {
-
   var customStore = {
     store: new DevExpress.data.CustomStore({
       key: "name",
       loadMode: "raw",
       load: function () {
-        return $.getJSON("https://pm.community.intersystems.com/packages/-/all")
+        return $.getJSON(`${urlREST}/installed`)
       }
     }),
     sort: "name"
   }
+
+  var moduleXML = '';
 
   $("#package-list").dxDataGrid({
     dataSource: customStore,
@@ -33,12 +34,12 @@ $(document).ready(function () {
     hoverStateEnabled: true,
     showBorders: true,
     paging: {
-        pageSize: 10
+      pageSize: 10
     },
     pager: {
-        showPageSizeSelector: true,
-        allowedPageSizes: [5, 10, 20],
-        showInfo: true
+      showPageSizeSelector: true,
+      allowedPageSizes: [5, 10, 20],
+      showInfo: true
     },
     sorting: {
       mode: "single"
@@ -56,18 +57,18 @@ $(document).ready(function () {
       visible: true
     },
     selection: {
-      mode: "single"
+      mode: "multiple"
     },
     focusedRowEnabled: true,
-    columns: ["name", "description", {
-      dataField: "repository",
-      cellTemplate: function (container, options) {
-        var linkRepository = options.data.repository;
-        container.append($("<a>").addClass('repoLink').text(linkRepository).on("click", function (args) {
-          openDetails(linkRepository);
-        }).appendTo(container));
-      }
-    }, "versions"],
+    // columns: ["name", "description", {
+    //   dataField: "repository",
+    //   cellTemplate: function (container, options) {
+    //     var linkRepository = options.data.repository;
+    //     container.append($("<a>").addClass('repoLink').text(linkRepository).on("click", function (args) {
+    //       openDetails(linkRepository);
+    //     }).appendTo(container));
+    //   }
+    // }, "versions"],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
 
@@ -111,11 +112,69 @@ $(document).ready(function () {
             }
           }
         }
+      }, {
+        location: "after",
+        widget: "dxButton",
+        options: {
+          type: "default",
+          icon: "fas fa-file-export",
+          text: "Export",
+          hint: "Export selected packages as dependencies for a new ZPM package",
+          onClick: function (e) {
+            var selectedRowsData = dataGrid.getSelectedRowsData();
+            if (selectedRowsData.length === 0) {
+              DevExpress.ui.notify("No package have been selected", "error");
+            } else {
+              const packages = {
+                "dependencies": selectedRowsData.map(item => `${item.name}:${item.version}`).join()
+              };
+              console.log(packages)
+              $.ajax({
+                url: urlREST + "/export",
+                method: "POST",
+                processData: false,
+                contentType: "application/json",
+                data: JSON.stringify(packages)
+              }).done(function (e) {
+                // moduleXML = atob(e.module).replaceAll("<", "&#60;").replaceAll(">", "&#62;");
+                moduleXML = _.escape(atob(e.module));
+                var popupOptions = {
+                  width: 800,
+                  height: 550,
+                  contentTemplate: function () {
+                    return $("<div/>").append(
+                      $(`<div style="width:100%; text-align:right"><a class="btn" href="#" onclick="copyToClipboard($('.xml')[0])"><i class="fas fa-copy"></i></a></div>`),
+                      // $(`<textarea cols="110" rows="24">${moduleXML}</textarea>`)
+                      $(`<pre style="height:400px; overflow-y:auto;"><code class="xml"></code></pre>`)
+                    );
+                  },
+                  onContentReady: function() {
+                    var el = document.querySelector('.xml');
+                    el.innerHTML = moduleXML;
+                    hljs.highlightBlock(el);
+                  },
+                  showTitle: true,
+                  title: "module.xml",
+                  dragEnabled: true,
+                  closeOnOutsideClick: true
+                };
+                $("#popup").dxPopup(popupOptions).dxPopup("instance").show();
+              });
+            }
+          }
+        }
       });
     },
   });
-
-
-
-
 });
+
+// https://stackoverflow.com/a/48020189/345422
+var copyToClipboard = function(element) {
+  var range = document.createRange();
+  range.selectNode(element);
+  window.getSelection().removeAllRanges(); // clear current selection
+  window.getSelection().addRange(range); // to select text
+  document.execCommand("copy");
+  window.getSelection().removeAllRanges();// to deselect
+  DevExpress.ui.notify("Text has been copied to clipboard", "success", 4000);
+}
