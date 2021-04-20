@@ -50,13 +50,6 @@ ClassMethod InstallPackage() As %Status
         Try {
             // Install ZPM package
             $$$TOE(sc, $zpm("install "_obj.name))
-
-            // Save the package information on InstalledPackages class
-            Set installedPackage = ##class(dc.zpm.InstalledPackages).%New()
-            Set installedPackage.AppName = obj.name
-            Set installedPackage.AppVersion = obj.version
-            Set installedPackage.DateInstalled = +$HOROLOG
-            $$$TOE(sc, installedPackage.%Save())
         }
         Catch ex {
             Set sc = ex.AsStatus()
@@ -182,6 +175,72 @@ ClassMethod XPathTest()
         "text()"
     )
     Write json,!
+}
+
+/// Get installed packages 
+ClassMethod GetInstalledPackages() As %Status
+{
+    Set sc = $$$OK
+
+    Set tSC = $System.Status.OK()
+	Set arrayApp = []
+
+    Try {
+
+		Set oRS = ##class(%SQL.Statement).%New()
+
+        Set sql = "Select Name, LastModifiedTimestamp, VersionString from %ZPM_PackageManager_Developer.""Module"" Order By Name"
+
+        Set tSC = oRS.%Prepare(sql)
+
+        Quit:$System.Status.IsError(tSC)
+
+        Set result = oRS.%Execute()
+
+        If (result.%SQLCODE '< 0) {
+	        While result.%Next() {
+                Set json = {}
+                do json.%Set("name",result.Name)
+                do json.%Set("dateTimeInstallation",result.LastModifiedTimestamp)
+                do json.%Set("version",result.VersionString)
+                //do json.%Set("currentVersion",..GetCurrentVersion(result.name))
+	        	do arrayApp.%Push(json)
+            }
+        }
+        Else {
+            Throw ##class(%Exception.SQL).CreateFromSQLCODE(result.%SQLCODE,result.%Message)
+        }
+    }
+    Catch (oException) {
+        Set tSC = oException.AsStatus()
+    }
+
+    do arrayApp.%ToJSON()
+
+    quit tSC
+}
+
+ClassMethod GetCurrentVersion(pPackageName As %String) As %String
+{
+    Set tSC = $$$OK 
+
+    Try {
+        Set httprequest = ##class(%Net.HttpRequest).%New()
+        Set httprequest.Server = "pm.community.intersystems.com"
+        Set httprequest.Https = 1
+        Set httprequest.SSLConfiguration = "default"
+        Set tSC = httprequest.Get("/packages/"_pPackageName_"/?/")
+
+        Set stream = httprequest.HttpResponse.Data
+        Set json = {}.%FromJSON(stream)
+        set tSC = json.version
+    }
+    Catch {
+        Write httprequest.HttpResponse.StatusCode_" - "_httprequest.HttpResponse.ReasonPhrase,!
+        Set tSC = $$$OK
+    }
+
+    Quit tSC
 }
 
 }
