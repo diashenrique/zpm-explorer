@@ -11,7 +11,6 @@ function openDetails(repositoryLink) {
 }
 
 $(document).ready(function () {
-
   var customStore = {
     store: new DevExpress.data.CustomStore({
       key: "name",
@@ -46,6 +45,14 @@ $(document).ready(function () {
     showRowLines: true,
     hoverStateEnabled: true,
     showBorders: true,
+    paging: {
+        pageSize: 10
+    },
+    pager: {
+        showPageSizeSelector: true,
+        allowedPageSizes: [5, 10, 20],
+        showInfo: true
+    },
     sorting: {
       mode: "single"
     },
@@ -61,9 +68,9 @@ $(document).ready(function () {
     headerFilter: {
       visible: true
     },
-    scrolling: {
-      mode: "virtual"
-    },
+    // scrolling: {
+    //   mode: "virtual"
+    // },
     selection: {
       mode: "single"
     },
@@ -125,8 +132,4 @@ $(document).ready(function () {
       });
     },
   });
-
-
-
-
 });
