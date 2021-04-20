@@ -94,10 +94,12 @@ ClassMethod UninstallPackage(pPackageName As %String) As %Status
     Use dev
 
     Try {
-        $$$TOE(sc, $zpm("uninstall "_pPackageName))
-        &SQL(
-            DELETE FROM dc_zpm.InstalledPackages WHERE AppName = :pPackageName
-        )
+
+        Set listDelete = $LISTFROMSTRING(pPackageName)
+        Set ptr = 0
+        While ($LISTNEXT(listDelete, ptr, tDeleteApp)) {
+            $$$TOE(sc, $zpm("uninstall "_tDeleteApp))
+        }
     }
     Catch ex {
         Set sc = ex.AsStatus()

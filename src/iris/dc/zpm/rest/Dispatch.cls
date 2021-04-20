@@ -11,7 +11,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Route Url="/" Method="GET" Call="Test" Cors="true"/>
 <Route Url="/package" Method="GET" Call="dc.zpm.Utils:GetPackages" Cors="true"/>
 <Route Url="/package" Method="POST" Call="dc.zpm.Utils:InstallPackage" Cors="true"/>
-<Route Url="/package/delete/:appname" Method="POST" Call="dc.zpm.Utils:UninstallPackage" Cors="true"/>
+<Route Url="/package/delete" Method="POST" Call="UninstallSelectedPackages" Cors="true"/>
 <Route Url="/installed" Method="GET" Call="dc.zpm.Utils:GetInstalledPackages" Cors="true"/>
 <Route Url="/export" Method="POST" Call="ExportDependencies" Cors="true"/>
 
@@ -34,6 +34,15 @@ ClassMethod ExportDependencies() As %Status
 	Set sc = $$$OK
 	Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
 	Set sc = ##class(dc.zpm.Utils).ExportDependecies(obj.dependencies)
+	Return sc
+}
+
+/// Delete the packages selected in Installed Packages page
+ClassMethod UninstallSelectedPackages() As %Status
+{
+	Set sc = $$$OK
+	Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
+	Set sc = ##class(dc.zpm.Utils).UninstallPackage(obj.packages)
 	Return sc
 }
 

@@ -78,8 +78,8 @@ $(document).ready(function () {
         options: {
           type: "default",
           icon: "fas fa-download",
-          text: "Install",
-          hint: "Install the selected package",
+          text: "Update",
+          hint: "Update the selected package",
           onClick: function (e) {
 
             var selectedRowsData = dataGrid.getSelectedRowsData();
@@ -148,7 +148,7 @@ $(document).ready(function () {
                       $(`<pre style="height:400px; overflow-y:auto;"><code class="xml"></code></pre>`)
                     );
                   },
-                  onContentReady: function() {
+                  onContentReady: function () {
                     var el = document.querySelector('.xml');
                     el.innerHTML = moduleXML;
                     hljs.highlightBlock(el);
@@ -163,18 +163,58 @@ $(document).ready(function () {
             }
           }
         }
+      }, {
+        location: "after",
+        widget: "dxButton",
+        options: {
+          type: "danger",
+          icon: "fas fa-download",
+          text: "Delete",
+          hint: "Delete the selected package",
+          onClick: function (e) {
+
+            var selectedRowsData = dataGrid.getSelectedRowsData();
+
+            if (selectedRowsData.length === 0) {
+              DevExpress.ui.notify("No package have been selected", "error");
+            } else {
+              const deletepackages = {
+                "packages": selectedRowsData.map(item => `${item.name}`).join()
+              };
+              console.log(deletepackages)
+              var result = DevExpress.ui.dialog.confirm("Do you want to <b>uninstall</b> the package(s) <b>" + `${deletepackages.packages}` + "</b> ?", "Install Package");
+              result.done(function (resp) {
+                if (resp) {
+                  $.ajax({
+                    url: `${urlREST}/package/delete`,
+                    method: "POST",
+                    processData: false,
+                    contentType: "application/json",
+                    data: JSON.stringify(deletepackages)
+                  }).done(function (e) {
+                    console.log(e);
+                    DevExpress.ui.notify(e.msg, e.status, 4000);
+                    $("#package-list").dxDataGrid("instance").refresh();
+                  });
+                }
+              });
+
+
+            }
+          }
+        }
       });
     },
   });
 });
 
 // https://stackoverflow.com/a/48020189/345422
-var copyToClipboard = function(element) {
+var copyToClipboard = function (element) {
   var range = document.createRange();
   range.selectNode(element);
   window.getSelection().removeAllRanges(); // clear current selection
   window.getSelection().addRange(range); // to select text
   document.execCommand("copy");
-  window.getSelection().removeAllRanges();// to deselect
+  window.getSelection().removeAllRanges(); // to deselect
   DevExpress.ui.notify("Text has been copied to clipboard", "success", 4000);
 }
