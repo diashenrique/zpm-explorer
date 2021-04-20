@@ -153,30 +153,6 @@ ClassMethod GetTags(pPackageName As %String, pPackageVersion As %String) As %Dyn
     Return tags
 }
 
-ClassMethod GetTagsTest() As %Status
-{
-    Return ..GetTags("iris-rad-studio", "1.1.0")
-}
-
-ClassMethod XPathTest()
-{
-    Write "Keywors: ",!
-    Set json = ..XPathQuery(
-        "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
-        "/Export/Document/Module/Keywords",
-        "text()"
-    )
-    Write json,!
-
-    Write "All dependencies names:",!
-    Set json = ..XPathQuery(
-        "https://pm.community.intersystems.com/packages/iris-rad-studio/1.1.0/manifest",
-        "/Export/Document/Module/Dependencies/ModuleReference",
-        "text()"
-    )
-    Write json,!
-}
-
 /// Get installed packages 
 ClassMethod GetInstalledPackages() As %Status
 {
