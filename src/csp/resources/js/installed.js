@@ -128,13 +128,11 @@ $(document).ready(function () {
                       loadPanel.hide();
                       console.log(e);
                       DevExpress.ui.notify(e.msg, e.status, 4000);
+                      $("#package-list").dxDataGrid("instance").refresh();
                     });
                   }
                 });
-
               }
-
-
             }
           }
         }
@@ -211,6 +209,7 @@ $(document).ready(function () {
               var result = DevExpress.ui.dialog.confirm("Do you want to <b>uninstall</b> the package(s) <b>" + `${deletepackages.packages}` + "</b> ?", "Install Package");
               result.done(function (resp) {
                 if (resp) {
+                  showLoadPanel();
                   $.ajax({
                     url: `${urlREST}/package/delete`,
                     method: "POST",
@@ -218,14 +217,13 @@ $(document).ready(function () {
                     contentType: "application/json",
                     data: JSON.stringify(deletepackages)
                   }).done(function (e) {
+                    loadPanel.hide();
                     console.log(e);
                     DevExpress.ui.notify(e.msg, e.status, 4000);
                     $("#package-list").dxDataGrid("instance").refresh();
                   });
                 }
               });
-
-
             }
           }
         }
