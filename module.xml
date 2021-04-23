@@ -3,7 +3,7 @@
   <Document name="zpm-explorer.ZPM">
     <Module>
       <Name>zpm-explorer</Name>
-      <Version>0.1.2</Version>
+      <Version>0.1.4</Version>
       <Packaging>module</Packaging>
       <SourcesRoot>src/iris</SourcesRoot>
       <Dependencies>

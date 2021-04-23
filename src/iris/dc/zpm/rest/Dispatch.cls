@@ -14,6 +14,8 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Route Url="/package/delete" Method="POST" Call="UninstallSelectedPackages" Cors="true"/>
 <Route Url="/installed" Method="GET" Call="dc.zpm.Utils:GetInstalledPackages" Cors="true"/>
 <Route Url="/export" Method="POST" Call="ExportDependencies" Cors="true"/>
+<Route Url="/wordcloud" Method="GET" Call="dc.zpm.Charts:BuildWordCloudDatasource" Cors="true"/>
+<Route Url="/sankey" Method="GET" Call="dc.zpm.Charts:BuildSankeyDataSource" Cors="true"/>
 
 </Routes>
 }

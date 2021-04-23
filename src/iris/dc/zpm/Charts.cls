@@ -67,6 +67,8 @@ ClassMethod LoadPackages() As %Status
 /// Build Word Cloud chart datasource
 ClassMethod BuildWordCloudDatasource() As %Status
 {
+    Set %response.ContentType = "application/json"
+    
     Set sc = $$$OK
     // data structure for Word Cloud chart 
     // [{"name": "tag1", "weight": countNum},{"name": "tag2", "weight": countNum}]
@@ -90,7 +92,6 @@ ClassMethod BuildWordCloudDatasource() As %Status
 
             set countTag = 1
             set ^zpmXplorerTagCount(idTag) = countTag + $get(^zpmXplorerTagCount(idTag))
-            write idTag,!
         }
     }
 
@@ -107,7 +108,7 @@ ClassMethod BuildWordCloudDatasource() As %Status
     }
 
     do arrWordCloud.%ToJSON()
-    
+
     Return sc
 }
 
