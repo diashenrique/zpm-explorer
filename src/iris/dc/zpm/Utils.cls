@@ -247,4 +247,40 @@ ClassMethod ExportDependecies(pDependencies As %String) As %Status
     Return sc
 }
 
+/// Read Manifest
+/// pPathType: K - Keywords, D - Dependencies
+ClassMethod ReadManifest(pPackageName As %String, pPackageVersion As %String, pPathType As %String) As %String
+{
+    set sc = $$$OK
+    set tReturn = ""
+    set strPath = ""
+    set url = $$$FormatText("https://pm.community.intersystems.com/packages/%1/%2/manifest", pPackageName, pPackageVersion)
+    set req=##class(%Net.HttpRequest).%New()
+	set req.Https = 1
+	set req.SSLConfiguration = "default"
+	$$$TOE(st, req.Get(url))
+	set data = req.HttpResponse.Data.Read()
+    set status=##class(%XML.TextReader).ParseStream(data,.textreader)
+    //check status
+    if $$$ISERR(status) {do $System.Status.DisplayError(status) quit}
+
+    if (pPathType="K") {
+        set strPath = "/Export/Document/Module/Keywords"
+    } else {
+        set strPath = "/Export/Document/Module/Dependencies/ModuleReference/Name"
+    }
+
+    //iterate through document, node by node
+    while textreader.Read()
+    {   
+        if (textreader.Path = strPath) { 
+            If textreader.Value'="" {
+                set tReturn = tReturn_$listbuild(textreader.Value)
+            }
+        }
+    }
+    
+    quit tReturn
+}
+
 }
