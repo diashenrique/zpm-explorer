@@ -68,6 +68,8 @@ ClassMethod LoadPackages() As %Status
 ClassMethod BuildWordCloudDatasource() As %Status
 {
     Set %response.ContentType = "application/json"
+
+    kill ^zpmXplorerTagCount
     
     Set sc = $$$OK
     // data structure for Word Cloud chart 
@@ -227,6 +229,7 @@ ClassMethod CreateSankeyDataSourceTask(ByRef tid As %Integer) As %Status
 
     Kill ^zpmXplorerTaskInfo
     Kill ^zpmXplorerTags
+    Kill ^zpmXplorerTagCount
     Kill ^zpmXplorerDependence
 
     Return sc
