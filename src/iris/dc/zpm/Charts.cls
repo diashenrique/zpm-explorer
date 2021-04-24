@@ -107,7 +107,27 @@ ClassMethod BuildWordCloudDatasource() As %Status
         do arrWordCloud.%Push(json)
     }
 
-    do arrWordCloud.%ToJSON()
+    Set start = $G(^zpmXplorerTaskInfo("RunLoadPackages", "start"), "")
+    Set finish = $G(^zpmXplorerTaskInfo("RunLoadPackages", "finish"), "")
+    Set start = $Replace($Replace($Replace(start, "-", ""), ":", ""), " ", "")
+    Set finish = $Replace($Replace($Replace(finish, "-", ""), ":", ""), " ", "")
+    Set lastUpdate = ""
+    If (start = "") {
+        Set loadingStatus = "NO_DATA"
+    } ElseIf (start < finish) {
+        Set msg = "ZPM data loaded (last update: "_^zpmXplorerTaskInfo("RunLoadPackages", "finish")_")"
+        Set loadingStatus = "DONE"
+        Set lastUpdate = ^zpmXplorerTaskInfo("RunLoadPackages", "finish")
+    } Else {
+        Set msg = "Updating ZPM data... displaying partial info."
+        Set loadingStatus = "LOADING"
+    }
+    Set resp = {
+        "loadingStatus": (loadingStatus),
+        "lastUpdate": (lastUpdate),
+        "data": (arrWordCloud)
+    }
+    do resp.%ToJSON()
 
     Return sc
 }
@@ -141,9 +161,73 @@ ClassMethod BuildSankeyDataSource() As %Status
             do arrDependence.%Push(1)
             do arrDataSouce.%Push(arrDependence)
         }
+        break
     }
 
-    do arrDataSouce.%ToJSON()
+    Set resp = {
+        "data": (arrDataSouce)
+    }
+    do resp.%ToJSON()
+
+    Return sc
+}
+
+/// Runs LoadPackages method logging it output to a file
+ClassMethod RunLoadPackages() As %Status
+{
+    Set sc = $$$OK
+
+    Set dev = $$$FormatText("/tmp/log-load-packages-%1.txt", $REPLACE($HOROLOG,",",""))
+    Open dev:("ARW"):5
+    Use dev
+    Set ^zpmXplorerTaskInfo("RunLoadPackages", "start") = $ZDT($H, 3)
+    Try {
+        Do ##class(dc.zpm.Charts).LoadPackages()
+        Set ^zpmXplorerTaskInfo("RunLoadPackages", "status") = 1
+    }
+    Catch ex {
+        Set sc = ex.AsStatus()
+        ZW sc
+        Set ^zpmXplorerTaskInfo("RunLoadPackages", "status") = sc
+    }
+    Set ^zpmXplorerTaskInfo("RunLoadPackages", "finish") = $ZDT($H, 3)
+    Close dev
+
+    Return sc
+}
+
+/// Creates a task for grab data for ZPM packages
+/// Runs every day at 0h
+/// Based on iris-cron-task
+ClassMethod CreateSankeyDataSourceTask(ByRef tid As %Integer) As %Status
+{
+    Set sc = $$$OK
+
+    Set task=##class(%SYS.Task).%New()
+    Set taskdef = ##class(%SYS.Task.RunLegacyTask).%New()
+
+    Set runcode = "Do ##class(dc.zpm.Charts).RunLoadPackages()"
+
+    Set task.Name = "RunLoadPackages"
+    Set task.NameSpace = $Namespace
+    Set task.TimePeriod = 0 // Daily
+    Set task.TimePeriodEvery = 1 // Every 1 day
+    Set task.DailyFrequency = 0 // Run once in a day
+    Set task.StartDate = $p($H + 1,",",1) // Start tomorrow
+
+    Set task.TaskClass = $classname(taskdef)
+    Set taskdef.ExecuteCode = runcode
+
+    Do task.AssignSettings(taskdef)
+    Set sc = task.%Save()
+    Return:$$$ISERR(sc) sc
+
+    set tid = task.%Id()
+    set sc = ##class(%SYS.Task).RunNow(tid)
+
+    Kill ^zpmXplorerTaskInfo
+    Kill ^zpmXplorerTags
+    Kill ^zpmXplorerDependence
 
     Return sc
 }

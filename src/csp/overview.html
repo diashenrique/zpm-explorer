@@ -66,6 +66,14 @@
         #package-list {
             height: 430px;
         }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+        }
+
+        .loadPending {
+            animation: fadeIn 1s infinite alternate
+        }
     </style>
     <!-- END THEME STYLES -->
 </head>
@@ -100,6 +108,11 @@
                     </div><!-- /.top-bar-item -->
                 </div>
                 <!-- /.top-bar-brand -->
+                <div class="card-body" style="text-align: right;">
+                    <figure class="highcharts-figure">
+                        <div id="container-updating"></div>
+                    </figure>
+                </div>
             </div>
             <!-- /.top-bar -->
         </header>

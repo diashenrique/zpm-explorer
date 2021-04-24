@@ -34,6 +34,9 @@
         Url="/csp/irisapp/api/" 
         UseSessionCookie="1"/> 
       <Resource Name="dc.zpm.PKG"/>
+      <Invokes>
+        <Invoke Class="dc.zpm.Charts" Method="CreateSankeyDataSourceTask"></Invoke>
+      </Invokes>
     </Module>
   </Document>
 </Export>
