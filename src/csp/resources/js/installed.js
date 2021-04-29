@@ -13,19 +13,18 @@ function openDetails(repositoryLink) {
 $(document).ready(function () {
   var customStore = {
     store: new DevExpress.data.CustomStore({
-      key: "name",
+      key: "id",
       loadMode: "raw",
       load: function () {
         return checkForUpdates().
-          done(data => {
-            return data.map(el => {
-              el.updateAvailable = !isUpdated(el.currentVersion, el.version) ? 'Yes' : 'No';
-              return el;
-            });
+        done(data => {
+          return data.map(el => {
+            el.updateAvailable = !isUpdated(el.currentVersion, el.version) ? 'Yes' : 'No';
+            return el;
           });
+        });
       }
-    }),
-    sort: "name"
+    })
   }
 
   var loadPanel = $(".loadpanel").dxLoadPanel({
@@ -62,7 +61,7 @@ $(document).ready(function () {
       showInfo: true
     },
     sorting: {
-      mode: "single"
+      mode: "multiple"
     },
     filterRow: {
       visible: true,
@@ -85,24 +84,30 @@ $(document).ready(function () {
       }
     },
     focusedRowEnabled: true,
-    columns: ["name", {
+    columns: [{
+      dataField: "namespace",
+      sortOrder: "asc"
+    }, {
+      dataField: "name",
+      sortOrder: "asc"
+    }, {
       dataField: "dateTimeInstallation",
       dataType: "datetime"
     }, {
-        dataField: "version",
-        caption: "Installed Version",
-        dataType: "string",
-        alignment: "right"
-      }, {
-        dataField: "currentVersion",
-        dataType: "string",
-        alignment: "right"
-      }, {
-        dataField: "updateAvailable",
-        caption: "Update available?",
-        dataType: "string",
-        alignment: "center"
-      }],
+      dataField: "version",
+      caption: "Installed Version",
+      dataType: "string",
+      alignment: "right"
+    }, {
+      dataField: "currentVersion",
+      dataType: "string",
+      alignment: "right"
+    }, {
+      dataField: "updateAvailable",
+      caption: "Update available?",
+      dataType: "string",
+      alignment: "center"
+    }],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
 
@@ -131,7 +136,8 @@ $(document).ready(function () {
                   if (resp) {
                     var values = {
                       name: selectedRowsData[0].name,
-                      update: 1
+                      update: 1,
+                      namespace: selectedRowsData[0].namespace
                     };
                     showLoadPanel();
                     $.ajax({
@@ -208,9 +214,9 @@ $(document).ready(function () {
         widget: "dxButton",
         options: {
           type: "danger",
-          icon: "fas fa-download",
-          text: "Delete",
-          hint: "Delete the selected package",
+          icon: "fas fa-trash",
+          text: "Uninstall",
+          hint: "Uninstall the selected package",
           onClick: function (e) {
 
             var selectedRowsData = dataGrid.getSelectedRowsData();
@@ -219,13 +225,15 @@ $(document).ready(function () {
               DevExpress.ui.notify("No package have been selected", "error");
             } else {
               const deletepackages = {
-                "packages": selectedRowsData.map(item => `${item.name}`).join()
+                "packages": selectedRowsData.map(item => `${item.id}`).join()
               };
-              console.log(deletepackages)
-              var result = DevExpress.ui.dialog.confirm("Do you want to <b>uninstall</b> the package(s) <b>" + `${deletepackages.packages}` + "</b> ?", "Install Package");
+              const deletepackagesMsg = {
+                "packages": selectedRowsData.map(item => `[${item.namespace}]${item.name}`).join()
+              };
+              var result = DevExpress.ui.dialog.confirm("Do you want to <b>uninstall</b> the package(s) <b>" + `${deletepackagesMsg.packages}` + "</b> ?", "Install Package");
               result.done(function (resp) {
                 if (resp) {
-                  showLoadPanel();
+                  //showLoadPanel();
                   $.ajax({
                     url: `${urlREST}/package/delete`,
                     method: "POST",

@@ -13,6 +13,9 @@ function openDetails(repositoryLink) {
 }
 
 $(document).ready(function () {
+
+  var selectedNamespace = null;
+
   var customStore = {
     store: new DevExpress.data.CustomStore({
       key: "name",
@@ -22,6 +25,15 @@ $(document).ready(function () {
       }
     }),
     sort: "name"
+  }
+
+  var selectboxNamespace = {
+    store: new DevExpress.data.CustomStore({
+      loadMode: "raw",
+      load: function () {
+        return $.getJSON(`${urlREST}/namespace`);
+      }
+    })
   }
 
   var loadPanel = $(".loadpanel").dxLoadPanel({
@@ -71,25 +83,41 @@ $(document).ready(function () {
       mode: "single"
     },
     focusedRowEnabled: true,
-    columns: ["name", "description", 
-    {
-      dataField: "repository",
-      cellTemplate: function (container, options) {
-        var linkRepository = options.data.repository;
-        container.append($("<a>").addClass('repoLink').text(linkRepository).on("click", function (args) {
-          openDetails(linkRepository);
-        }).appendTo(container));
+    columns: ["name", "description",
+      {
+        dataField: "repository",
+        cellTemplate: function (container, options) {
+          var linkRepository = options.data.repository;
+          container.append($("<a>").addClass('repoLink').text(linkRepository).on("click", function (args) {
+            openDetails(linkRepository);
+          }).appendTo(container));
+        }
+      },
+      {
+        dataField: "versions",
+        caption: "Version",
+        dataType: "string",
+        alignment: "right",
+        width: 100
       }
-    }, 
-    {
-      dataField: "versions",
-      caption: "Version",
-      dataType: "string",
-      alignment: "right",
-      width: 100
-    }],
+    ],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
+
+      e.toolbarOptions.items.push({
+        location: "after",
+        widget: "dxSelectBox",
+        options: {
+          dataSource: selectboxNamespace,
+          placeholder: "Select Namespace to Install",
+          valueExpr: "id",
+          displayExpr: "text",
+          width: 240,
+          onValueChanged: function (data) {
+              selectedNamespace = data.component.option('selectedItem');
+          }
+        }
+      });
 
       e.toolbarOptions.items.push({
         location: "after",
@@ -100,10 +128,11 @@ $(document).ready(function () {
           text: "Install",
           hint: "Install the selected package",
           onClick: function (e) {
+            if (selectedNamespace === null) {
+              DevExpress.ui.notify("No Namespace have been selected", "error");
+            }
 
             var selectedRowsData = dataGrid.getSelectedRowsData();
-
-            console.log(selectedRowsData[0]);
 
             if (selectedRowsData.length === 0) {
               DevExpress.ui.notify("No package have been selected", "error");
@@ -113,7 +142,8 @@ $(document).ready(function () {
                 if (resp) {
                   var values = {
                     name: selectedRowsData[0].name,
-                    version: selectedRowsData[0].versions[0]
+                    version: selectedRowsData[0].versions[0],
+                    namespace: selectedNamespace.id
                   };
                   showLoadPanel();
                   $.ajax({
@@ -124,7 +154,6 @@ $(document).ready(function () {
                     data: JSON.stringify(values)
                   }).done(function (e) {
                     loadPanel.hide();
-                    console.log(e);
                     DevExpress.ui.notify(e.msg, e.status, 4000);
                   });
                 }

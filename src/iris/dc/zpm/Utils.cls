@@ -42,10 +42,13 @@ ClassMethod InstallPackage() As %Status
     
     Set obj = ##class(%DynamicAbstractObject).%FromJSON(%request.Content.Read())
 
-    Set blnIsInstalled = ..IsInstalled(obj.name)
+    Set blnIsInstalled = ..IsInstalled(obj.name, obj.namespace)
     Set blnUpdate = obj.update
 
     If ((blnIsInstalled = $$$NO) || (blnUpdate = $$$YES)) {
+        New $Namespace
+        Set $Namespace = obj.namespace
+        
         Set dev = $$$FormatText("/tmp/log-zpm-%1-%2.txt", obj.name, $REPLACE($HOROLOG,",",""))
         Open dev:("ARW"):5
         Use dev
@@ -81,8 +84,10 @@ ClassMethod InstallPackage() As %Status
 }
 
 /// Check if a package it's already installed
-ClassMethod IsInstalled(pPackageName As %String) As %Status
+ClassMethod IsInstalled(pPackageName As %String, pNamespace As %String) As %Status
 {
+    New $Namespace
+    Set $Namespace = pNamespace
     Return ##class(%ZPM.PackageManager.Developer.Module).NameExists(pPackageName)
 }
 
@@ -101,7 +106,13 @@ ClassMethod UninstallPackage(pPackageName As %String) As %Status
         Set listDelete = $LISTFROMSTRING(pPackageName)
         Set ptr = 0
         While ($LISTNEXT(listDelete, ptr, tDeleteApp)) {
-            $$$TOE(sc, $zpm("uninstall "_tDeleteApp))
+            set strNamespace = $piece(tDeleteApp,"||",1)
+            set strDeleteApp = $piece(tDeleteApp,"||",2)
+            
+            new $Namespace
+            set $Namespace = strNamespace
+            
+            $$$TOE(sc, $zpm("uninstall "_strDeleteApp))
         }
     }
     Catch ex {
@@ -159,12 +170,16 @@ ClassMethod GetTags(pPackageName As %String, pPackageVersion As %String) As %Dyn
 }
 
 /// Get installed packages 
-ClassMethod GetInstalledPackages() As %Status
+ClassMethod GetInstalledPackages(pPackageName As %String) As %Status
 {
+    New $Namespace
+    Set $Namespace = pPackageName
+    
     Set sc = $$$OK
 
     Set tSC = $System.Status.OK()
-	Set arrayApp = []
+
+    kill ^["%SYS"]zpmXplorerInstalled($Namespace) 
 
     Try {
 
@@ -180,12 +195,7 @@ ClassMethod GetInstalledPackages() As %Status
 
         If (result.%SQLCODE '< 0) {
 	        While result.%Next() {
-                Set json = {}
-                do json.%Set("name",result.Name)
-                do json.%Set("dateTimeInstallation",result.LastModifiedTimestamp)
-                do json.%Set("version",result.VersionString)
-                do json.%Set("currentVersion",..GetCurrentVersion(result.name))
-	        	do arrayApp.%Push(json)
+                set ^["%SYS"]zpmXplorerInstalled($Namespace,result.Name) = $listbuild(result.LastModifiedTimestamp,result.VersionString,..GetCurrentVersion(result.name))
             }
         }
         Else {
@@ -195,8 +205,6 @@ ClassMethod GetInstalledPackages() As %Status
     Catch (oException) {
         Set tSC = oException.AsStatus()
     }
-
-    do arrayApp.%ToJSON()
 
     quit tSC
 }
@@ -281,6 +289,119 @@ ClassMethod ReadManifest(pPackageName As %String, pPackageVersion As %String, pP
     }
     
     quit tReturn
+}
+
+/// do ##class(dc.zpm.Utils).getNamespaceList()
+ClassMethod getNamespaceList() As %Status
+{
+
+	New $Namespace
+	Set $Namespace = "%SYS"
+
+	Set tSC = $System.Status.OK()
+	Set arrayEnsNamespace = []
+
+	Try {
+
+		Set oRS = ##class(%SQL.Statement).%New()
+
+		Set tSC = oRS.%PrepareClassQuery("Config.Namespaces", "List")
+
+		Quit:$System.Status.IsError(tSC)
+
+		Set result = oRS.%Execute()
+
+		If (result.%SQLCODE '< 0) {
+			While result.%Next() {
+				Set json = { }
+
+                ;Skip %ALL
+				Continue:(result.%GetData(1) = "%ALL")
+
+		  		Do json.%Set("id",result.%GetData(1))
+				Do json.%Set("text",result.%GetData(1)) 
+				Do arrayEnsNamespace.%Push(json)
+			}
+		}
+		Else {
+			Throw ##class(%Exception.SQL).CreateFromSQLCODE(result.%SQLCODE,result.%Message)
+		}
+	}
+	Catch (oException) {
+		Set tSC = oException.AsStatus()
+	}
+
+	Write arrayEnsNamespace.%ToJSON() 
+
+	Quit tSC
+}
+
+/// Get Installed Packages in all Namespaces
+ClassMethod GetPackageAllNamespaces() As %Status
+{
+    New $Namespace
+	Set $Namespace = "%SYS"
+    
+    Set sc = $$$OK
+    
+	Set tSC = $System.Status.OK()
+	Set arrayEnsNamespace = []
+
+	Try {
+        // Listing All Namespaces
+		Set oRS = ##class(%SQL.Statement).%New()
+		Set tSC = oRS.%PrepareClassQuery("Config.Namespaces", "List")
+		Quit:$System.Status.IsError(tSC)
+		
+        Set result = oRS.%Execute()
+
+		If (result.%SQLCODE '< 0) {
+			While result.%Next() {		
+                ;Skip %ALL
+				Continue:(result.%GetData(1) = "%ALL")
+                do ..GetInstalledPackages(result.%GetData(1))
+			}
+		}
+		Else {
+			Throw ##class(%Exception.SQL).CreateFromSQLCODE(result.%SQLCODE,result.%Message)
+		}
+	}
+	Catch (oException) {
+		Set tSC = oException.AsStatus()
+	}
+
+    // Read ^["%SYS"]zpmXplorerInstalled and return json
+    Set arrayApp = []
+    
+    set idNamespace = ""
+    for {
+        set idNamespace = $order(^["%SYS"]zpmXplorerInstalled(idNamespace))
+        quit:idNamespace=""
+
+        set idPackage = ""
+        for {
+            set idPackage = $order(^["%SYS"]zpmXplorerInstalled(idNamespace,idPackage))
+            quit:idPackage=""
+
+            set listPackage = $get(^["%SYS"]zpmXplorerInstalled(idNamespace,idPackage))
+            set installDate = $listget(listPackage,1)
+            set installVersion = $listget(listPackage,2)
+            set currentVersion = ..GetCurrentVersion(idPackage)
+
+            set json = {}
+            do json.%Set("id",idNamespace_"||"_idPackage)
+            do json.%Set("namespace",idNamespace)
+            do json.%Set("name",idPackage)
+            do json.%Set("dateTimeInstallation",installDate)
+            do json.%Set("version",installVersion)
+            do json.%Set("currentVersion",currentVersion)
+            do arrayApp.%Push(json)
+        }
+    }
+
+    do arrayApp.%ToJSON()
+
+    Return sc
 }
 
 }
