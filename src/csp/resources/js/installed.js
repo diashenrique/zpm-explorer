@@ -16,7 +16,13 @@ $(document).ready(function () {
       key: "name",
       loadMode: "raw",
       load: function () {
-        return $.getJSON(`${urlREST}/installed`)
+        return checkForUpdates().
+          done(data => {
+            return data.map(el => {
+              el.updateAvailable = !isUpdated(el.currentVersion, el.version) ? 'Yes' : 'No';
+              return el;
+            });
+          });
       }
     }),
     sort: "name"
@@ -73,20 +79,30 @@ $(document).ready(function () {
     selection: {
       mode: "multiple"
     },
+    onRowPrepared(e) {
+      if (e.rowType == 'data' && !isUpdated(e.data.currentVersion, e.data.version)) {
+        e.rowElement[0].style.fontWeight = 'bold';
+      }
+    },
     focusedRowEnabled: true,
     columns: ["name", {
       dataField: "dateTimeInstallation",
       dataType: "datetime"
     }, {
-      dataField: "version",
-      caption: "Installed Version",
-      dataType: "string",
-      alignment: "right"
-    }, {
-      dataField: "currentVersion",
-      dataType: "string",
-      alignment: "right"
-    }],
+        dataField: "version",
+        caption: "Installed Version",
+        dataType: "string",
+        alignment: "right"
+      }, {
+        dataField: "currentVersion",
+        dataType: "string",
+        alignment: "right"
+      }, {
+        dataField: "updateAvailable",
+        caption: "Update available?",
+        dataType: "string",
+        alignment: "center"
+      }],
     onToolbarPreparing: function (e) {
       var dataGrid = e.component;
 

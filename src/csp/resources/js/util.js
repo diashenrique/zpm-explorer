@@ -150,3 +150,28 @@ function getUserInfo() {
         return JSON.parse(userInfo);
     }
 }
+
+function checkForUpdates() {
+    var urlOrigin = window.location.origin;
+    var restapp = "/csp/irisapp"
+    var urlREST = `${urlOrigin}${restapp}/api`;
+    return $.getJSON(`${urlREST}/installed`, 'GET')
+        .done(data => {
+            const idx = data.findIndex(item => !isUpdated(item.currentVersion, item.version));
+            $('.update-available').each(function(el) {
+                idx > -1 ? $(this).fadeIn(2000) : $(this).fadeOut(2000)
+            })
+        });
+}
+
+function isUpdated(currVersion, version) {
+    var retorno = true;
+    currVersion = (currVersion || '').split('.');
+    version = (version || '').split('.');
+    if (currVersion.length === version.length) {
+        for (var i = 0; retorno && i < version.length; i++) {
+            retorno = retorno && currVersion[i] <= version[i];
+        }
+    }
+    return retorno;
+}

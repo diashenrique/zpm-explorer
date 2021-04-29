@@ -2,6 +2,8 @@ var urlOrigin = window.location.origin;
 var restapp = "/csp/irisapp"
 var urlREST = `${urlOrigin}${restapp}/api`;
 
+checkForUpdates();
+
 $(document).ajaxError(function (event, jqXHR, ajaxSettings, thrownError) {
   console.log(jqXHR.status, event, ajaxSettings, thrownError)
 });
