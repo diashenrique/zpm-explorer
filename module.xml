@@ -14,7 +14,7 @@
         </ModuleReference>
       </Dependencies>
       <CSPApplication 
-        CookiePath="/csp/irisapp/" 
+        CookiePath="/csp/zpmexplorer/" 
         DefaultTimeout="900" 
         SourcePath="/src/csp" 
         DeployPath="${cspdir}/csp/${namespace}/" 
@@ -27,7 +27,7 @@
         UseSessionCookie="2"/>
       <CSPApplication 
         AuthenticationMethods="16416" 
-        CookiePath="/csp/irisapp/api/" 
+        CookiePath="/csp/zpmexplorer/api/" 
         DispatchClass="dc.zpm.rest.Dispatch" 
         MatchRoles=":%All" 
         Recurse="1" 
