@@ -1,5 +1,5 @@
 var urlOrigin = window.location.origin;
-var restapp = "/csp/irisapp"
+var restapp = "/csp/zpmexplorer"
 var urlREST = `${urlOrigin}${restapp}/api`;
 
 checkForUpdates();
