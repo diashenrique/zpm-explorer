@@ -1,5 +1,5 @@
-# ZPM Explorer
-A graphic interface to explorer the applications inside InterSystems Package Manager
+## ZPM Explorer
+A graphic interface to explorer the applications inside InterSystems Package Manager.
 
 ## Description
 ZPM Explorer's idea is to make it easier for people to find out what ZPM offers. Every week, every day, a new app joins the ZPM world, so why not help developers and non-developers take advantage of this incredible world?!
