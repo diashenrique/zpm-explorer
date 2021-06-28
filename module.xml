@@ -14,7 +14,7 @@
         </ModuleReference>
       </Dependencies>
       <CSPApplication 
-        CookiePath="/csp/irisapp/" 
+        CookiePath="/csp/zpmexplorer/" 
         DefaultTimeout="900" 
         SourcePath="/src/csp" 
         DeployPath="${cspdir}/csp/${namespace}/" 
@@ -23,16 +23,16 @@
         Recurse="1" ServeFiles="1" 
         ServeFilesTimeout="3600" 
         UnauthenticatedEnabled="0" 
-        Url="/csp/irisapp" 
+        Url="/csp/zpmexplorer" 
         UseSessionCookie="2"/>
       <CSPApplication 
         AuthenticationMethods="16416" 
-        CookiePath="/csp/irisapp/api/" 
+        CookiePath="/csp/zpmexplorer/api/" 
         DispatchClass="dc.zpm.rest.Dispatch" 
         MatchRoles=":%All" 
         Recurse="1" 
         ServeFiles="1" 
-        Url="/csp/irisapp/api/" 
+        Url="/csp/zpmexplorer/api/" 
         UseSessionCookie="1"/> 
       <Resource Name="dc.zpm.PKG"/>
       <Invokes>
