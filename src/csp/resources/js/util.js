@@ -153,7 +153,7 @@ function getUserInfo() {
 
 function checkForUpdates() {
     var urlOrigin = window.location.origin;
-    var restapp = "/csp/irisapp"
+    var restapp = "/csp/zpmexplorer"
     var urlREST = `${urlOrigin}${restapp}/api`;
     return $.getJSON(`${urlREST}/installed`, 'GET')
         .done(data => {
