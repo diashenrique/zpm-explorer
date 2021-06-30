@@ -114,7 +114,7 @@ $(document).ready(function () {
           displayExpr: "text",
           width: 240,
           onValueChanged: function (data) {
-              selectedNamespace = data.component.option('selectedItem');
+            selectedNamespace = data.component.option('selectedItem');
           }
         }
       });
@@ -130,34 +130,35 @@ $(document).ready(function () {
           onClick: function (e) {
             if (selectedNamespace === null) {
               DevExpress.ui.notify("No Namespace have been selected", "error");
-            }
-
-            var selectedRowsData = dataGrid.getSelectedRowsData();
-
-            if (selectedRowsData.length === 0) {
-              DevExpress.ui.notify("No package have been selected", "error");
             } else {
-              var result = DevExpress.ui.dialog.confirm("Do you want to install the package <b>" + `${selectedRowsData[0].name}` + "</b> ?", "Install Package");
-              result.done(function (resp) {
-                if (resp) {
-                  var values = {
-                    name: selectedRowsData[0].name,
-                    version: selectedRowsData[0].versions[0],
-                    namespace: selectedNamespace.id
-                  };
-                  showLoadPanel();
-                  $.ajax({
-                    url: urlREST + "/package",
-                    method: "POST",
-                    processData: false,
-                    contentType: "application/json",
-                    data: JSON.stringify(values)
-                  }).done(function (e) {
-                    loadPanel.hide();
-                    DevExpress.ui.notify(e.msg, e.status, 4000);
-                  });
-                }
-              });
+              
+              var selectedRowsData = dataGrid.getSelectedRowsData();
+
+              if (selectedRowsData.length === 0) {
+                DevExpress.ui.notify("No package have been selected", "error");
+              } else {
+                var result = DevExpress.ui.dialog.confirm("Do you want to install the package <b>" + `${selectedRowsData[0].name}` + "</b> ?", "Install Package");
+                result.done(function (resp) {
+                  if (resp) {
+                    var values = {
+                      name: selectedRowsData[0].name,
+                      version: selectedRowsData[0].versions[0],
+                      namespace: selectedNamespace.id
+                    };
+                    showLoadPanel();
+                    $.ajax({
+                      url: urlREST + "/package",
+                      method: "POST",
+                      processData: false,
+                      contentType: "application/json",
+                      data: JSON.stringify(values)
+                    }).done(function (e) {
+                      loadPanel.hide();
+                      DevExpress.ui.notify(e.msg, e.status, 4000);
+                    });
+                  }
+                });
+              }
             }
           }
         }
