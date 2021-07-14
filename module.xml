@@ -3,7 +3,7 @@
   <Document name="zpm-explorer.ZPM">
     <Module>
       <Name>zpm-explorer</Name>
-      <Version>0.1.6</Version>
+      <Version>0.1.7</Version>
       <Description>A graphic interface to explorer the applications inside InterSystems Package Manager</Description>
       <Packaging>module</Packaging>
       <SourcesRoot>src/iris</SourcesRoot>
