@@ -8,12 +8,19 @@ ClassMethod GetPackages() As %Status
 {
     Set tSC = $$$OK 
     kill ^zpmXplorerVersion
+    kill ^["%SYS"]zpmXplorerInstalledPkg
+
+    do ..GetPackageAllNamespaces()
+
+    set arrApps = []
+
+    Quit tSC
 
     Try {
         Set httprequest = ##class(%Net.HttpRequest).%New()
         Set httprequest.Server = "pm.community.intersystems.com"
         Set httprequest.Https = 1
-        Set httprequest.SSLConfiguration = "default"
+        Set httprequest.SSLConfiguration = "pm.community.intersystems.com"
         Set tSC = httprequest.Get("/packages/-/all")
 
         Set stream = httprequest.HttpResponse.Data
@@ -22,12 +29,20 @@ ClassMethod GetPackages() As %Status
         Set iter = arrJSON.%GetIterator()
         While iter.%GetNext(.key , .value ) {
             set ^zpmXplorerVersion(arrJSON.%Get(key).name) = arrJSON.%Get(key).versions.%Get(0)
-        }
+            set json = {}
+            do json.%Set("name",arrJSON.%Get(key).name)
+            do json.%Set("description",arrJSON.%Get(key).description)
+            do json.%Set("repository",arrJSON.%Get(key).repository)
+            do json.%Set("versions",arrJSON.%Get(key).versions.%Get(0))
+            do arrApps.%Push(json)
+        }      
     }
     Catch {
         Write httprequest.HttpResponse.StatusCode_" - "_httprequest.HttpResponse.ReasonPhrase,!
         Set tSC = $$$OK
     }
+
+    do arrApps.%ToJSON()
 
     Quit tSC
 }
@@ -170,10 +185,10 @@ ClassMethod GetTags(pPackageName As %String, pPackageVersion As %String) As %Dyn
 }
 
 /// Get installed packages 
-ClassMethod GetInstalledPackages(pPackageName As %String) As %Status
+ClassMethod GetInstalledPackages(pNamespace As %String) As %Status
 {
     New $Namespace
-    Set $Namespace = pPackageName
+    Set $Namespace = pNamespace
     
     Set sc = $$$OK
 
@@ -196,6 +211,7 @@ ClassMethod GetInstalledPackages(pPackageName As %String) As %Status
         If (result.%SQLCODE '< 0) {
 	        While result.%Next() {
                 set ^["%SYS"]zpmXplorerInstalled($Namespace,result.Name) = $listbuild(result.LastModifiedTimestamp,result.VersionString,..GetCurrentVersion(result.name))
+                set ^["%SYS"]zpmXplorerInstalledPkg(result.Name) = ""
             }
         }
         Else {
@@ -342,8 +358,6 @@ ClassMethod GetPackageAllNamespaces() As %Status
     New $Namespace
 	Set $Namespace = "%SYS"
     
-    Set sc = $$$OK
-    
 	Set tSC = $System.Status.OK()
 	Set arrayEnsNamespace = []
 
@@ -370,6 +384,19 @@ ClassMethod GetPackageAllNamespaces() As %Status
 		Set tSC = oException.AsStatus()
 	}
 
+    Quit tSC
+}
+
+/// Get Installed Packages in all Namespaces
+ClassMethod GetInstalledPackageAllNamespaces() As %Status
+{
+    Set tCurrentNamespace = $Namespace
+    
+    do ..GetPackageAllNamespaces()
+
+    New $Namespace
+	Set $Namespace = tCurrentNamespace
+    
     // Read ^["%SYS"]zpmXplorerInstalled and return json
     Set arrayApp = []
     
@@ -401,7 +428,7 @@ ClassMethod GetPackageAllNamespaces() As %Status
 
     do arrayApp.%ToJSON()
 
-    Return sc
+    Quit $$$OK
 }
 
 }

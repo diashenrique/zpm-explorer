@@ -12,7 +12,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Route Url="/package" Method="GET" Call="dc.zpm.Utils:GetPackages" Cors="true"/>
 <Route Url="/package" Method="POST" Call="dc.zpm.Utils:InstallPackage" Cors="true"/>
 <Route Url="/package/delete" Method="POST" Call="UninstallSelectedPackages" Cors="true"/>
-<Route Url="/installed" Method="GET" Call="dc.zpm.Utils:GetPackageAllNamespaces" Cors="true"/>
+<Route Url="/installed" Method="GET" Call="dc.zpm.Utils:GetInstalledPackageAllNamespaces" Cors="true"/>
 <Route Url="/namespace" Method="GET" Call="dc.zpm.Utils:getNamespaceList" Cors="true"/>
 <Route Url="/export" Method="POST" Call="ExportDependencies" Cors="true"/>
 <Route Url="/wordcloud" Method="GET" Call="dc.zpm.Charts:BuildWordCloudDatasource" Cors="true"/>
