@@ -14,7 +14,7 @@ ClassMethod GetPackages() As %Status
 
     set arrApps = []
 
-    Quit tSC
+    #; Quit tSC
 
     Try {
         Set httprequest = ##class(%Net.HttpRequest).%New()
@@ -229,7 +229,7 @@ ClassMethod GetCurrentVersion(pPackageName As %String) As %String
 {
     Set tSC = $$$OK 
 
-    if ($G(^zpmXplorerVersion) = 0) {
+    if ($data(^zpmXplorerVersion) = 0) {
         do ..GetPackages()
     }
     set tSC = $get(^zpmXplorerVersion(pPackageName))
