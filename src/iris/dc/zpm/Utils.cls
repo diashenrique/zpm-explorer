@@ -17,10 +17,11 @@ ClassMethod GetPackages() As %Status
     #; Quit tSC
 
     Try {
-        Set httprequest = ##class(%Net.HttpRequest).%New()
-        Set httprequest.Server = "pm.community.intersystems.com"
-        Set httprequest.Https = 1
-        Set httprequest.SSLConfiguration = "pm.community.intersystems.com"
+        #; Set httprequest = ##class(%Net.HttpRequest).%New()
+        #; Set httprequest.Server = "pm.community.intersystems.com"
+        #; Set httprequest.Https = 1
+        #; Set httprequest.SSLConfiguration = "default"
+        #Dim httprequest As %Net.HttpRequest = ..GetHttpRequest()
         Set tSC = httprequest.Get("/packages/-/all")
 
         Set stream = httprequest.HttpResponse.Data
@@ -150,12 +151,14 @@ ClassMethod UninstallPackage(pPackageName As %String) As %Status
     Return sc
 }
 
-ClassMethod XPathQuery(url As %String, context As %String, expr As %String)
+ClassMethod XPathQuery(path As %String, context As %String, expr As %String)
 {
-	Set req=##class(%Net.HttpRequest).%New()
-	Set req.Https = 1
-	Set req.SSLConfiguration = "default"
-	$$$TOE(st, req.Get(url))
+	#; Set req=##class(%Net.HttpRequest).%New()
+	#; Set req.Https = 1
+	#; Set req.SSLConfiguration = "default"
+    #; Set req.Server = "pm.community.intersystems.com"
+    #Dim req As %Net.HttpRequest = ..GetHttpRequest()
+	$$$TOE(st, req.Get(path))
 	Set data = req.HttpResponse.Data.Read()
 	$$$TOE(st, ##class(%XML.XPATH.Document).CreateFromString(data,.tDoc))
     $$$TOE(st, tDoc.EvaluateExpression(context,expr,.tRes))
@@ -168,7 +171,7 @@ ClassMethod XPathQuery(url As %String, context As %String, expr As %String)
 ClassMethod GetTags(pPackageName As %String, pPackageVersion As %String) As %DynamicArray
 {
     Set json = ..XPathQuery(
-        $$$FormatText("https://pm.community.intersystems.com/packages/%1/%2/manifest", pPackageName, pPackageVersion),
+        $$$FormatText("/packages/%1/%2/manifest", pPackageName, pPackageVersion),
         "/Export/Document/Module/Keywords",
         "text()"
     )
@@ -278,11 +281,13 @@ ClassMethod ReadManifest(pPackageName As %String, pPackageVersion As %String, pP
     set sc = $$$OK
     set tReturn = ""
     set strPath = ""
-    set url = $$$FormatText("https://pm.community.intersystems.com/packages/%1/%2/manifest", pPackageName, pPackageVersion)
-    set req=##class(%Net.HttpRequest).%New()
-	set req.Https = 1
-	set req.SSLConfiguration = "default"
-	$$$TOE(st, req.Get(url))
+    set path = $$$FormatText("/packages/%1/%2/manifest", pPackageName, pPackageVersion)
+    #; set req=##class(%Net.HttpRequest).%New()
+	#; set req.Https = 1
+	#; set req.SSLConfiguration = "default"
+    #; Set req.Server = "pm.community.intersystems.com"
+    #Dim req As %Net.HttpRequest = ..GetHttpRequest()
+	$$$TOE(st, req.Get(path))
 	set data = req.HttpResponse.Data.Read()
     set status=##class(%XML.TextReader).ParseStream(data,.textreader)
     //check status
@@ -429,6 +434,46 @@ ClassMethod GetInstalledPackageAllNamespaces() As %Status
     do arrayApp.%ToJSON()
 
     Quit $$$OK
+}
+
+ClassMethod GetZPMRepoURL() As %String
+{
+    Return $G(^zpmRepoInfo("Domain"), "pm.community.intersystems.com")
+}
+
+ClassMethod GetZPMRepoUser() As %String
+{
+    Return $G(^zpmRepoInfo("User"), "")
+}
+
+ClassMethod GetZPMRepoPassword() As %String
+{
+    Return $G(^zpmRepoInfo("Password"), "")
+}
+
+ClassMethod GetZPMRepoUseHttps() As %String
+{
+    Return $G(^zpmRepoInfo("UseHttps"), 1)
+}
+
+ClassMethod IncludeBasicAuth(ByRef pReq As %Net.HttpRequest)
+{
+    Set repoUser = ..GetZPMRepoUser()
+    Set repoPwd = ..GetZPMRepoPassword()
+    If (repoUser '= "") && (repoPwd '= "") {
+        Set userPwdBase64 = $SYSTEM.Encryption.Base64Encode($$$FormatText("%1:%2", repoUser, repoPwd))
+        Do pReq.SetHeader("Authorization", $$$FormatText("Basic %1", userPwdBase64))
+    }
+}
+
+ClassMethod GetHttpRequest() As %Net.HttpRequest
+{
+    Set req = ##class(%Net.HttpRequest).%New()
+	Set req.Https = ..GetZPMRepoUseHttps()
+	Set req.SSLConfiguration = "default"
+    Set req.Server = ..GetZPMRepoURL()
+    Do ..IncludeBasicAuth(.req)
+    Return req
 }
 
 }
