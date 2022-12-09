@@ -229,7 +229,7 @@ ClassMethod GetCurrentVersion(pPackageName As %String) As %String
 {
     Set tSC = $$$OK 
 
-    if ($data(^zpmXplorerVersion) = 0) {
+    if ($G(^zpmXplorerVersion) = 0) {
         do ..GetPackages()
     }
     set tSC = $get(^zpmXplorerVersion(pPackageName))
