@@ -28,7 +28,7 @@ $ docker-compose up -d
 
 ## How to Test it
 
-1. Open in the URL in browser: [http://localhost:52773/csp/irisapp/explorer.html](http://localhost:52773/csp/irisapp/explorer.html)
+1. Open in the URL in browser: [http://localhost:52773/csp/zpmexplorer/explorer.html](http://localhost:52773/csp/zpmexplorer/explorer.html)
 
 2. You can take advantage of the VSCode link shortcurts:
 
